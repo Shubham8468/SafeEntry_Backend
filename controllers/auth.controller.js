@@ -91,9 +91,8 @@ export const login = async (req, resp) => {
 
         resp.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV == 'production',
-            sameSite: process.env.NODE_ENV ?
-                'none' : 'strict',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
         return resp.status(200).json({ Message: "user loggin Successfully !!!", Success: true })
@@ -109,8 +108,7 @@ export const logout = async (req, resp) => {
         resp.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV,
-            'none': 'strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         })
         return resp.json({ Success: true, Message: 'Logged Out' })
     } catch (err) {
@@ -132,7 +130,7 @@ export const sendVerificationOtp = async (req, resp) => {
         const otp = String(Math.floor(100000 + Math.random() * 900000));
 
         user.verifyOtp = otp;
-        user.verifyOtpExpireAt = Data.now() + 24 * 60 * 60 * 1000
+        user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
 
         await user.save();// save all proparty
 
@@ -145,7 +143,7 @@ export const sendVerificationOtp = async (req, resp) => {
 Welcome to SafeEntry 👋
 
 To complete your registration, please verify your email address using the One-Time Password (OTP) below: ${otp}
-This OTP is valid for the next ${verifyOtpExpireAt} minutes.
+This OTP is valid for the next 24 hours.
 For your security, please do not share this code with anyone.
 
 If you did not request this verification, you can safely ignore this email.
@@ -162,7 +160,7 @@ SafeEntry Team`
 
 
     } catch (err) {
-        return resp.status(500).json({ Message: "Invalid OTP", Success: false })
+        return resp.status(500).json({ Message: err.message, Success: false })
 
     }
 }
@@ -177,12 +175,12 @@ export const verifyEmail = async (req, resp) => {
         const user= await userModel.findById(userId);
 
         if(!user){
-            resp.json({Message:"User Not Found ", Success:false})
+            return resp.json({Message:"User Not Found ", Success:false})
         }
         if(user.verifyOtp === '' || user.verifyOtp!==otp){
             return resp.json({Message:"Invalid OTP",Success:false});
         }
-        if(user.verifyOtpExpireAt < Data.nom()){
+        if(user.verifyOtpExpireAt < Date.now()){
             return resp.json({Message:"OTP Expired",Success:false})
         }
 
@@ -192,7 +190,7 @@ export const verifyEmail = async (req, resp) => {
 
         await user.save();
 
-        return resp.json({Messag:"Email verify Successfully", Success:true})
+        return resp.json({Message:"Email verify Successfully", Success:true})
 
 
 
@@ -200,4 +198,16 @@ export const verifyEmail = async (req, resp) => {
     }catch(err){
         return resp.status(500).json({ Message: err.message, Success: false })
     }
+}
+
+// check user is Login or not 
+
+export const isAuthenticated = async (req,resp)=>{
+    try{
+        // we check user is login or not with the help of middelware
+        return resp.json({Success:true})
+    }catch(err){
+        return resp.json({Message:err.message,Success:false})
+    }
+
 }
