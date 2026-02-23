@@ -26,7 +26,7 @@ const userSchema= mongoose.Schema({
         type:Boolean,
         default:false
     },
-    respOtp:{
+    resetOtp:{
         type:String, default:''
     },
     respOtpExporeAt:{

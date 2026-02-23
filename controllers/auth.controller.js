@@ -172,42 +172,131 @@ export const verifyEmail = async (req, resp) => {
         return resp.status(500).json({ Message: 'Missing Details', Success: false })
     }
     try {
-        const user= await userModel.findById(userId);
+        const user = await userModel.findById(userId);
 
-        if(!user){
-            return resp.json({Message:"User Not Found ", Success:false})
+        if (!user) {
+            return resp.json({ Message: "User Not Found ", Success: false })
         }
-        if(user.verifyOtp === '' || user.verifyOtp!==otp){
-            return resp.json({Message:"Invalid OTP",Success:false});
+        if (user.verifyOtp === '' || user.verifyOtp !== otp) {
+            return resp.json({ Message: "Invalid OTP", Success: false });
         }
-        if(user.verifyOtpExpireAt < Date.now()){
-            return resp.json({Message:"OTP Expired",Success:false})
+        if (user.verifyOtpExpireAt < Date.now()) {
+            return resp.json({ Message: "OTP Expired", Success: false })
         }
 
-        user.isAccountVerified= true;
-        user.verifyOtp ='';
-        user.verifyOtpExpireAt=0;
+        user.isAccountVerified = true;
+        user.verifyOtp = '';
+        user.verifyOtpExpireAt = 0;
 
         await user.save();
 
-        return resp.json({Message:"Email verify Successfully", Success:true})
+        return resp.json({ Message: "Email verify Successfully", Success: true })
 
 
 
-        
-    }catch(err){
+
+    } catch (err) {
         return resp.status(500).json({ Message: err.message, Success: false })
     }
 }
 
 // check user is Login or not 
 
-export const isAuthenticated = async (req,resp)=>{
-    try{
+export const isAuthenticated = async (req, resp) => {
+    try {
         // we check user is login or not with the help of middelware
-        return resp.json({Success:true})
-    }catch(err){
-        return resp.json({Message:err.message,Success:false})
+        return resp.json({ Success: true })
+    } catch (err) {
+        return resp.json({ Message: err.message, Success: false })
     }
 
+}
+
+// Send Password Reset OTP to user 
+
+export const sendResetOtp = async (req, resp) => {
+    const { email } = req.body;  // here i fatch email from the user req then i verify it 
+    if (!email) {
+        return resp.json({ Message: "Email id required", Success: false })
+    }
+    try {
+        // here we find the user with the help of userEmail id
+        const user = await userModel.findOne({ email })
+        if (!user) {
+            return resp.json({ Message: "User Not Found in DB", Success: false })
+        };
+        // NOw user email id in dataBase in case we jenarate otp and save it DB and send to user new Otp
+        const otp = String(Math.floor(100000 + Math.random() * 900000));
+        user.resetOtp = otp;
+        user.respOtpExporeAt = Date.now() + 15 * 60 * 1000; // this only 15 
+        await user.save(); // save all changes ..
+
+        // Now send a email to user for the New Opt 
+        const mailOption = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: 'Your OTP to Reset Password',
+            text: `Hello ${user.name},
+
+We received a request to change the password for your account.
+
+Your One-Time Password (OTP) is:
+
+${otp}
+
+This OTP is valid for 15 minutes only. Please do not share this code with anyone for security reasons.
+
+If you did not request a password change, please ignore this email. Your account will remain safe.
+
+For any help, feel free to contact us.
+
+Best regards,
+Team : SafeEntry
+SupportEmai :${process.env.SENDER_EMAIL}`
+        }
+        transport.sendMail(mailOption); // call for the send mail function  nodemailer
+        return resp.json({Message:"OTP sent to your email ",Success:true})
+
+    } catch (err) {
+        return resp.json({ Message: err.message, Success: false })
+    }
+}
+
+//Reset user Pass
+export const resetPassword = async (req,resp)=>{
+    // for the resetPassword we get email , opt, resetPass from the user req
+    const {email,otp,newPassword}=req.body;
+    if(!email || !otp || !newPassword){
+        return resp.json({Message:"All field are required!!!",Success:false});
+    }
+    try{    
+        // Now we first find user with this email that are come from the req body
+        const user = await userModel.findOne({email});
+        if(!user){
+            return resp.json({Message:"User Not Found",Success:false})
+        }
+        if(user.resetOtp === "" || user.resetOtp != otp){
+            return resp.status(501).json({Message:"Invalid Otp",Success:false})
+        }
+        if(user.respOtpExporeAt < Date.now()){
+            return resp.json({Message:"OTP Expired " ,Success:false})
+        }
+         // jo update password aa rha hai use bcrypt krna pdega
+        const hashPassword= await bcrypt.hash(newPassword,10);
+        user.password=hashPassword; // yha hm password ko reset kr rhe hai 
+        // than i reset all opt 
+        user.resetOtp=""
+        user.respOtpExporeAt=0;
+
+
+        await user.save(); // this for save all changes 
+
+        return resp.status(200).json({Message:"Password Reset Successfully !!!!!",Success:true})
+
+
+
+
+    }catch(err){
+        return resp.json({Message:err.message,Success:false});
+    }
 }
