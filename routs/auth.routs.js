@@ -9,7 +9,7 @@ authRoouter.post('/login',login);
 authRoouter.post('/logout',logout);
 authRoouter.post('/send-verify-otp',userAuth,sendVerificationOtp);
 authRoouter.post('/verify-account',userAuth,verifyEmail);
-authRoouter.post('/is-auth',userAuth,isAuthenticated);
+authRoouter.get('/is-auth',userAuth,isAuthenticated);
 authRoouter.post('/sent-reset-otp',sendResetOtp);
 authRoouter.post('/reset-password',resetPassword);
 

@@ -15,10 +15,12 @@ connectDB().then(() => {
 }).catch(err => {
     console.log('Failed to connect to MongoDB:', err);
 });// here i connect DB 
+//Link Frondend part of my Project
+const allowedOrigins=['http://localhost:5173']
 app.use(express.json()); // data are comming on json formet from the server side 
 app.use(cookieParser());
 
-app.use(cors({ credentials: true }));
+app.use(cors({origin:allowedOrigins, credentials: true }));
 
 // API End points +++++++++++++++++
 
