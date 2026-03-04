@@ -76,7 +76,7 @@ SafeEntry Team`
 export const login = async (req, resp) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        resp.status(404).json({ Message: "Email and Password are required!!!", Success: false })
+        return resp.status(404).json({ Message: "Email and Password are required!!!", Success: false })
     }
     try {
         const user = await userModel.findOne({ email });
@@ -205,7 +205,7 @@ export const verifyEmail = async (req, resp) => {
 export const isAuthenticated = async (req, resp) => {
     try {
         // we check user is login or not with the help of middelware
-        return resp.json({ Success: true })
+        return resp.json({ Success: true, Message:"Alrady loggden!!!" })
     } catch (err) {
         return resp.json({ Message: err.message, Success: false })
     }
