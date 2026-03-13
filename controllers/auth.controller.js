@@ -49,7 +49,7 @@ export const register = async (req, resp) => {
         // Session ID
 
         resp.cookie('token', token, getCookieOptions(7 * 24 * 60 * 60 * 1000));
-        // sending Welcome message to User 
+        // Send welcome email in background — do NOT await so response is immediate
         const mailOption = {
             from: process.env.SENDER_EMAIL,
             to: email,
@@ -57,13 +57,13 @@ export const register = async (req, resp) => {
             text: `Hi ${name},
 
 Welcome to SafeEntry! 👋
-Your account has been successfully created, and you’re now logged in.
+Your account has been successfully created, and you're now logged in.
 With SafeEntry, your access is protected through a secure authentication system designed to keep your data safe and reliable.
-If you have any questions or face any issues, feel free to reach out. We’re glad to have you on board!
+If you have any questions or face any issues, feel free to reach out. We're glad to have you on board!
 Best regards,
 SafeEntry Team`
         }
-        await transport.sendMail(mailOption)
+        transport.sendMail(mailOption).catch(err => console.error('Welcome email error:', err.message))
 
         return resp.status(200).json({ Message: "user Loggin Successfully and Rigister ", Success: true })
 
