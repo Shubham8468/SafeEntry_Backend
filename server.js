@@ -15,12 +15,23 @@ connectDB().then(() => {
 }).catch(err => {
     console.log('Failed to connect to MongoDB:', err);
 });// here i connect DB 
-//Link Frondend part of my Project
-const allowedOrigins=['http://localhost:5173']
+// Link frontend origins for local + production deployments.
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.FRONTEND_URL,
+].filter(Boolean)
 app.use(express.json()); // data are comming on json formet from the server side 
 app.use(cookieParser());
 
-app.use(cors({origin:allowedOrigins, credentials: true }));
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true)
+        }
+        return callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true,
+}));
 
 // API End points +++++++++++++++++
 
