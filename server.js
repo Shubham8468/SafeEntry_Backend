@@ -8,6 +8,31 @@ import userRoutes from './routs/user.routs.js'
 const app = express();
 const port = process.env.PORT || 4000;
 
+const configuredOrigins = [
+    process.env.FRONTEND_URL,
+    ...(process.env.FRONTEND_URLS || '').split(','),
+]
+    .map((origin) => origin?.trim())
+    .filter(Boolean)
+
+const allowedOrigins = new Set([
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://safe-entry-frontend.vercel.app',
+    ...configuredOrigins,
+])
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.has(origin)) {
+            return callback(null, true)
+        }
+
+        return callback(new Error(`Not allowed by CORS: ${origin}`))
+    },
+    credentials: true,
+}
+
 connectDB().then(() => {
     app.listen(port, () => {
         console.log(`Server is Running on ${port} port`)
@@ -15,23 +40,10 @@ connectDB().then(() => {
 }).catch(err => {
     console.log('Failed to connect to MongoDB:', err);
 });// here i connect DB 
-// Link frontend origins for local + production deployments.
-const allowedOrigins = [
-    'http://localhost:5173',
-    process.env.FRONTEND_URL,
-].filter(Boolean)
 app.use(express.json()); // data are comming on json formet from the server side 
 app.use(cookieParser());
 
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            return callback(null, true)
-        }
-        return callback(new Error('Not allowed by CORS'))
-    },
-    credentials: true,
-}));
+app.use(cors(corsOptions));
 
 // API End points +++++++++++++++++
 
