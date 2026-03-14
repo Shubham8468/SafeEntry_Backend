@@ -149,7 +149,7 @@ Best regards,
 SafeEntry Team`
         }
 
-        transport.sendMail(mailOption);
+        await transport.sendMail(mailOption);
 
         resp.json({ Message: "Verification OPT Sent to Email", Success: true })
 
